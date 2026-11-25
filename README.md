@@ -13,6 +13,7 @@
 | 문서 | 설명 |
 |---|---|
 | [docs/engine-guide.md](docs/engine-guide.md) | 엔진 v0.2.0 가이드. 루프 순서, API, 좌표계, 프레임 속도, 입력 규칙, 제약 |
+[text](src/Game.md)| 게임 시스템 및 구현 기능 안내
 
 
 ## 3. 파일 구조
