@@ -1,68 +1,89 @@
 # Enemy.cs
 
-`Enemy`는 맵의 경로를 일정 간격으로 이동하는 개체의 상태를 관리하는 클래스입니다.
+`Enemy`는 웨이브에 등장하는 몬스터의 종류, 체력, 이동 속도, 보상 및 결승점 도착 여부를 관리합니다.
 
-## 역할
+## 생성 규칙
 
-- 이동 경로에서 현재 위치의 인덱스를 보관합니다.
-- 일정 시간마다 다음 경로 칸으로 이동합니다.
-- 목표 지점에 도착했는지 기록합니다.
+`new Enemy(wave, random)`으로 생성하며, 랜덤 확률에 따라 10종 중 하나를 선택합니다.
 
-## 상수
+| 구간 | 종류 |
+|---|---|
+| 0~39% | Normal |
+| 40~54% | Fast |
+| 55~67% | Tank |
+| 68~75% | Heavy |
+| 76~82% | Runner |
+| 83~87% | Brute |
+| 88~91% | Wisp |
+| 92~94% | Plague |
+| 95~97% | Mage |
+| 98~99% | Boss |
 
-| 이름 | 값 | 설명 |
-|---|---:|---|
-| `MoveInterval` | `0.3f` | Enemy가 한 칸 이동하는 데 필요한 시간(초) |
+## 몬스터 스펙
+
+| 종류 | 기본 HP | 이동 간격 | 처치 보상 |
+|---|---:|---:|---:|
+| Normal | 45 | 0.30초 | 5 |
+| Fast | 30 | 0.20초 | 5 |
+| Tank | 110 | 0.30초 | 10 |
+| Heavy | 180 | 0.30초 | 15 |
+| Runner | 38 | 0.18초 | 5 |
+| Brute | 70 | 0.30초 | 5 |
+| Wisp | 55 | 0.24초 | 5 |
+| Plague | 90 | 0.30초 | 5 |
+| Mage | 65 | 0.30초 | 5 |
+| Boss | 300 | 0.38초 | 35 |
+
+실제 최대 HP는 웨이브 배율을 기본 HP에 곱해 계산합니다.
+
+```text
+MaxHp = 기본 HP × WaveRules.GetEnemyHpMultiplier(wave)
+```
 
 ## 주요 속성
 
 | 속성 | 형식 | 설명 |
 |---|---|---|
-| `PathIndex` | `int` | 현재 위치에 해당하는 `GridMap.Path`의 인덱스 |
-| `ReachedGoal` | `bool` | 목표 지점 도착 여부 |
+| `Type` | `int` | 몬스터 종류 인덱스 |
+| `PathIndex` | `int` | 현재 이동 경로 배열 인덱스 |
+| `Hp` | `int` | 현재 체력 |
+| `MaxHp` | `int` | 웨이브 배율이 적용된 최대 체력 |
+| `Reward` | `int` | 처치 시 지급 다이아 |
+| `Speed` | `float` | 한 칸 이동에 필요한 시간 |
+| `ReachedGoal` | `bool` | 결승점 도착 여부 |
 
-두 속성은 외부에서 값을 변경할 수 없고, 클래스 내부의 메서드를 통해서만 갱신됩니다.
+## 이동 처리
 
-## `_moveElapsed`
-
-한 칸 이동까지 누적된 시간을 저장하는 비공개 필드입니다.
-
-```text
-누적 시간 + deltaTime
-누적 시간이 0.3초 이상이면 이동
-남은 시간은 다음 이동 계산에 보존
-```
-
-이동 간격은 다음 방식으로 처리합니다.
-
-```csharp
-while (_moveElapsed >= MoveInterval)
-{
-    _moveElapsed -= MoveInterval;
-    PathIndex++;
-}
-```
-
-따라서 프레임 지연이 생겨 한 번의 갱신에 경과 시간이 많이 누적되더라도 가능한 만큼 여러 칸을 이동할 수 있습니다.
-
-## 목표 도착 처리
-
-경로 배열의 마지막 인덱스에 도달하면 `ReachedGoal`을 `true`로 바꾸고 이후 이동을 멈춥니다.
-
-```csharp
-if (ReachedGoal)
-    return;
-```
-
-목표 도착 이후에는 `_enemy.Update()`가 호출되어도 상태가 변경되지 않습니다.
-
-## 의존 관계
-
-`Enemy`는 자신의 위치를 계산할 때 `GridMap.Path`를 참조합니다.
-실제 좌표 변환은 `Enemy` 내부가 아니라 `DefenseGame.Render()`에서 처리합니다.
+`Update(deltaTime)`는 누적 이동 시간을 갱신합니다. 누적 시간이 몬스터의 `Speed` 이상이면 `PathIndex`를 증가시키고 남은 시간을 다음 이동 계산에 이어서 사용합니다.
 
 ```text
-Enemy.PathIndex
-  → GridMap.Path[PathIndex]
-  → 화면 좌표 (X, Y)
+누적 시간 += deltaTime
+누적 시간 >= Speed
+  → 한 칸 이동
+  → 남은 누적 시간 유지
 ```
+
+적의 위치는 `GridMap.Path[PathIndex]`로 변환됩니다.
+
+## 사망 및 도착 판정
+
+- 체력이 0 이하가 되면 필드에서 제거되고 처치 보상을 지급합니다.
+- 경로의 마지막 위치를 지나면 `ReachedGoal`이 됩니다.
+- 결승점에 도착한 적은 플레이어 HP를 1 감소시키고 제거됩니다.
+
+## 화면 문자
+
+| 종류 | 문자 |
+|---|---|
+| Normal | `e` |
+| Fast | `f` |
+| Tank | `t` |
+| Heavy | `H` |
+| Runner | `v` |
+| Brute | `b` |
+| Wisp | `w` |
+| Plague | `p` |
+| Mage | `m` |
+| Boss | `B` |
+
+모든 적은 화면에서 빨간색으로 렌더링됩니다.

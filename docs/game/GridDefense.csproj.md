@@ -41,7 +41,9 @@ GridDefense 프로젝트
   ├─ Program.cs
   ├─ DefenseGame.cs
   ├─ Enemy.cs
+  ├─ Unit.cs
   ├─ GridMap.cs
+  ├─ WaveRules.cs
   └─ 실행 파일 생성
 ```
 
