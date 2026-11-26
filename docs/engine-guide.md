@@ -55,13 +55,17 @@ class HelloGame : GameBase
 | `Update(float deltaTime)` | 매 프레임 한 번. 상태(위치·점수·충돌)를 바꾼다 |
 | `Render(Screen screen)` | 매 프레임 한 번. 지금 상태를 그린다 |
 | `screen.Draw(x, y, c)` | 글자 하나. 화면 밖은 무시 |
+| `screen.Draw(x, y, c, foregroundColor)` | 글자 하나를 지정한 전경색으로 그린다. 맵 타일·유닛 구분에 사용 |
 | `screen.DrawText(x, y, text)` | (x, y)부터 오른쪽으로 한 글자씩. 화면 밖 글자는 무시 (v0.2.0, #6) |
+| `screen.DrawText(x, y, text, foregroundColor)` | 문자열을 지정한 전경색으로 그린다 |
 | `screen.Width`, `screen.Height` | 화면 크기 |
 
 ## 좌표계
 
 - 왼쪽 위가 (0, 0). x는 오른쪽, y는 아래로 커진다
 - 화면 밖 좌표의 `Draw`는 조용히 무시된다
+- 색상을 지정하지 않은 글자는 실행 전 콘솔 전경색으로 표시되고, 매 프레임 색상 버퍼도 함께 초기화된다
+- `Present`는 같은 색의 연속된 글자를 묶어 출력하고 원래 콘솔 전경색을 복원한다
 
 ## 프레임 속도
 
